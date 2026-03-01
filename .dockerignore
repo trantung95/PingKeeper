@@ -1,0 +1,10 @@
+bin/
+obj/
+.git/
+.vs/
+.vscode/
+.adn/
+Documents/
+*.md
+*.user
+*.sln
