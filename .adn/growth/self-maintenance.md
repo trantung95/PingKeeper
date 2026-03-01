@@ -8,12 +8,14 @@ Rules and checklists for keeping PingKeeper consistent and healthy as it grows.
 
 Run after **every** code change:
 
-- [ ] `dotnet build PingKeeper.sln` — **0 errors, 0 warnings**
-- [ ] `dotnet test PingKeeper.sln` — **all tests pass**
-- [ ] New public methods have corresponding test(s)
-- [ ] `dotnet run` — starts successfully, `/ping` returns OK
-- [ ] Ping cycle runs and logs results for configured endpoints
-- [ ] `.adn/` docs updated if the change affected architecture, config, or behavior (see mapping in `CLAUDE.md`)
+- [ ] Test suite passes (`dotnet test PingKeeper.sln`)
+- [ ] Unbroken build (`dotnet build PingKeeper.sln` — 0 errors, 0 warnings)
+- [ ] New public methods have corresponding tests
+- [ ] Get `/ping` endpoint returns OK (`dotnet run` then `curl localhost:8080/ping`)
+- [ ] Tick cycle runs and logs results for configured endpoints
+- [ ] Review `.adn/` docs for accuracy (see mapping in `CLAUDE.md`)
+- [ ] All config options documented in `configuration/config-reference.md`
+- [ ] Naming follows conventions in `growth/coding-conventions.md`
 
 ---
 
@@ -100,9 +102,10 @@ Before considering any change complete:
 
 | Mistake | Prevention |
 |---------|-----------|
-| `new HttpClient()` | Always use `IHttpClientFactory.CreateClient("name")` |
-| Webhook failure crashes ping loop | Catch all exceptions in notification service |
-| Repeated notifications for same failure | `ServiceState` fires only on transitions |
 | Hardcoded config values | Put in `appsettings.json` + Config POCO + DI binding |
+| Yielding without cleanup on shutdown | Use `CancellationToken`, dispose `PeriodicTimer` |
+| Bare `new HttpClient()` | Always use `IHttpClientFactory.CreateClient("name")` |
+| Repeated notifications for same failure | `ServiceState` fires only on transitions |
+| 8080 port conflicts in deployment | Set `ASPNETCORE_URLS` to override default port |
 | Stale `.adn/` docs | Check `CLAUDE.md` mapping table before considering done |
 | Forgotten environment variable docs | Update `.adn/configuration/config-reference.md` |

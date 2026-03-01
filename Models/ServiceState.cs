@@ -2,7 +2,9 @@ namespace PingKeeper.Models;
 
 /// <summary>
 /// Tracks consecutive failures and up/down state for a single endpoint.
+/// Uses threshold-based detection to determine when a service is down.
 /// Notifications fire only on state transitions (up→down, down→up).
+/// Guards against repeated alerts by ignoring steady-state conditions.
 /// </summary>
 public sealed class ServiceState
 {

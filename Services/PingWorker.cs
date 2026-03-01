@@ -3,6 +3,13 @@ using PingKeeper.Models;
 
 namespace PingKeeper.Services;
 
+/// <summary>
+/// Health-checks all configured endpoints on a periodic timer.
+/// Yields control between ticks via async/await and PeriodicTimer.
+/// Best-effort notifications ensure the loop never crashes on delivery failures.
+/// Reads fresh configuration each tick via IOptionsMonitor for hot-reload.
+/// 8-second default grace period allows the host to fully initialize before pinging.
+/// </summary>
 public sealed class PingWorker : BackgroundService
 {
     private readonly IHttpClientFactory _httpClientFactory;
@@ -29,7 +36,8 @@ public sealed class PingWorker : BackgroundService
     {
         _logger.LogInformation("PingKeeper worker starting");
 
-        await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+        var initialDelay = _options.CurrentValue.InitialDelaySeconds;
+        await Task.Delay(TimeSpan.FromSeconds(initialDelay), stoppingToken);
 
         var intervalSeconds = _options.CurrentValue.IntervalSeconds;
         using var timer = new PeriodicTimer(TimeSpan.FromSeconds(intervalSeconds));

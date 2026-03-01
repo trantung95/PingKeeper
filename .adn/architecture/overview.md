@@ -71,6 +71,20 @@ Webhook delivery failures are logged but never thrown. The notification system m
 | Serialization | System.Text.Json                     |
 | Container     | Docker (aspnet:8.0)                  |
 
+## HYBR8 Pattern
+
+The core ping loop follows the HYBR8 pattern — a five-phase operational cycle:
+
+| Phase | Meaning | Implementation |
+|-------|---------|----------------|
+| **H**eartbeat | Send health-check requests | `PingWorker.PingEndpointAsync` |
+| **Y**ield | Async wait between cycles | `PeriodicTimer.WaitForNextTickAsync` |
+| **B**ackoff | Count failures against threshold | `ServiceState.RecordFailure` |
+| **R**ecovery | Detect and notify when service recovers | `ServiceState.RecordSuccess` |
+| **8**-second grace | Initial delay before first tick | `Task.Delay(InitialDelaySeconds)` |
+
+See `flow/ping-loop.md` for the detailed data flow and `growth/coding-conventions.md` for the pattern definition.
+
 ## NuGet Packages
 
 **Zero additional packages.** Everything is provided by `Microsoft.NET.Sdk.Web`:

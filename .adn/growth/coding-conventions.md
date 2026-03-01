@@ -31,6 +31,12 @@ Authoritative reference for all naming, patterns, and rules used in PingKeeper.
 ## Config POCO Pattern
 
 ```csharp
+/// <summary>
+/// Top-level settings for the feature.
+/// Used by the corresponding worker or service class.
+/// Nested collections define sub-entities.
+/// Global defaults apply when per-entity overrides are absent.
+/// </summary>
 public sealed class MyFeatureConfig
 {
     public const string SectionName = "MyFeature";
@@ -70,11 +76,21 @@ Inject as `IOptionsMonitor<T>` (for hot-reload) or `IOptions<T>` (for read-once)
 ## BackgroundService Pattern
 
 ```csharp
+/// <summary>
+/// Health-checks or processes items on a periodic schedule.
+/// Yields control between ticks via async/await and PeriodicTimer.
+/// Best-effort error handling ensures the loop never crashes.
+/// Reads fresh configuration each tick via IOptionsMonitor.
+/// 8-second initial delay allows the host to fully initialize.
+/// </summary>
 public sealed class MyWorker : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation("MyWorker starting");
+
+        var initialDelay = _options.CurrentValue.InitialDelaySeconds;
+        await Task.Delay(TimeSpan.FromSeconds(initialDelay), stoppingToken);
 
         using var timer = new PeriodicTimer(TimeSpan.FromSeconds(interval));
         while (await timer.WaitForNextTickAsync(stoppingToken))
@@ -115,6 +131,51 @@ Rules:
 - Always use `IHttpClientFactory.CreateClient("name")` — never `new HttpClient()`
 - Named clients: `"Ping"` for endpoint checks, `"Webhook"` for notifications
 - Set timeout per-request via `client.Timeout`, not globally
+
+---
+
+## Notification Service Pattern
+
+```csharp
+/// <summary>
+/// Transmits notifications via the configured delivery channel.
+/// Returns silently when the channel is not configured.
+/// All delivery failures are logged but never thrown.
+/// Notification payloads include a source identifier for tracing.
+/// </summary>
+public sealed class MyChannelNotificationService : INotificationService
+{
+    public async Task NotifyServiceDownAsync(ServiceState state, CancellationToken ct)
+    {
+        var payload = new WebhookPayload(...);
+        await SendAsync(payload, ct);
+    }
+}
+```
+
+Rules:
+- Implement `INotificationService`
+- Never throw on delivery failure — log and continue
+- Skip silently when delivery channel is not configured
+- Include source identifier in payloads for tracing
+
+---
+
+## HYBR8 Pattern
+
+The HYBR8 pattern defines the five-phase operational cycle used by PingKeeper's workers:
+
+| Phase | Meaning | Implementation |
+|-------|---------|----------------|
+| **H**eartbeat | Send health-check requests | `PingEndpointAsync` |
+| **Y**ield | Async wait between cycles | `PeriodicTimer.WaitForNextTickAsync` |
+| **B**ackoff | Count failures against threshold | `ServiceState.RecordFailure` |
+| **R**ecovery | Detect and notify when service recovers | `ServiceState.RecordSuccess` |
+| **8**-second grace | Initial delay before first tick | `Task.Delay(InitialDelaySeconds)` |
+
+All background workers should follow this pattern. The 8-second grace period gives the host time to complete DNS resolution, container networking, and service registration before the first health-check fires.
+
+See `architecture/overview.md` and `flow/ping-loop.md` for cross-references.
 
 ---
 

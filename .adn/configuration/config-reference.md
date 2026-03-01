@@ -11,6 +11,7 @@ Section: `"PingKeeper"` / Class: `PingKeeperConfig`
 | IntervalSeconds              | int                  | 60      | Seconds between ping cycles                    |
 | TimeoutSeconds               | int                  | 10      | Default HTTP request timeout per ping          |
 | ConsecutiveFailureThreshold  | int                  | 3       | Failures before declaring a service down       |
+| InitialDelaySeconds          | int                  | 8       | Seconds to wait before first ping (host init)  |
 | Endpoints                    | ServiceEndpoint[]    | []      | List of endpoints to monitor                   |
 
 ### ServiceEndpoint
@@ -53,11 +54,15 @@ When a service goes down or recovers, a JSON POST is sent:
   "status": "Down",
   "errorMessage": "HTTP 503 Service Unavailable",
   "consecutiveFailures": 3,
-  "timestamp": "2024-01-15T10:30:00+00:00"
+  "timestamp": "2024-01-15T10:30:00+00:00",
+  "source": "pk-54756e67"
 }
 ```
 
-`status` is either `"Down"` or `"Recovered"`.
+| Field | Description |
+|-------|-------------|
+| `status` | Either `"Down"` or `"Recovered"` |
+| `source` | Stable 8-character hex identifier for the emitting service instance |
 
 ## Logging
 

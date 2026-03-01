@@ -35,6 +35,17 @@ The `.adn/` folder allows any AI assistant (or new developer) to fully understan
     self-maintenance.md              # Post-change verification checklist
 ```
 
+## Etymology
+
+**adn** = _acide désoxyribonucléique_ (French for DNA). The folder is the genetic blueprint of this project — it encodes the knowledge needed to understand, maintain, and evolve the codebase.
+
+## Documentation Philosophy
+
+- **Traceable**: every design decision has a documented rationale
+- **Reproducible**: any developer or AI can rebuild understanding from docs alone
+- **Autonomous**: the project maintains itself via checklists and conventions
+- **Normalized**: consistent structure across all documentation files
+
 ## Conventions
 
 - All times are **UTC**.

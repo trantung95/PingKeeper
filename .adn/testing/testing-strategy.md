@@ -36,6 +36,18 @@ dotnet test --filter "Category=Unit"      # unit only (fast, no Docker)
 dotnet test --filter "Category=E2E"       # E2E only (requires Docker + internet)
 ```
 
+## HYBR8 Pattern Coverage
+
+Unit tests validate each phase of the HYBR8 pattern (see `growth/coding-conventions.md`):
+
+| Phase | Tested In |
+|-------|-----------|
+| Heartbeat | `PingWorkerTests` — HTTP calls with mocked handler |
+| Yield | Implicit — tests call `PingAllEndpointsAsync` directly |
+| Backoff | `ServiceStateTests` — threshold-based failure counting |
+| Recovery | `ServiceStateTests` + `PingWorkerTests` — transition detection |
+| 8-second grace | Skipped in unit tests (tests call internal method directly) |
+
 ## Unit Test Patterns
 
 ### Mocking IHttpClientFactory

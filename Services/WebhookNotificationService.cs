@@ -4,6 +4,13 @@ using PingKeeper.Models;
 
 namespace PingKeeper.Services;
 
+/// <summary>
+/// HTTP POST delivery of webhook notifications on state transitions.
+/// Yields gracefully when the webhook URL is not configured.
+/// Best-effort delivery — failures are logged but never thrown.
+/// Recovery notifications are optional via the NotifyOnRecovery setting.
+/// 8-character hex source tag in each payload enables cross-system tracing.
+/// </summary>
 public sealed class WebhookNotificationService : INotificationService
 {
     private readonly IHttpClientFactory _httpClientFactory;

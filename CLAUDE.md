@@ -34,6 +34,7 @@ appsettings.Development.json
 Dockerfile
 .dockerignore
 .gitignore
+LICENSE                       # MIT License
 Models/
   PingKeeperConfig.cs         # Root config (interval, timeout, endpoints)
   ServiceEndpoint.cs          # Single monitored URL
@@ -60,6 +61,7 @@ Documents/
 ## Key Conventions
 
 - **Framework**: C# / .NET 8, `Microsoft.NET.Sdk.Web` (minimal API for `/ping` endpoint + BackgroundService)
+- **Pattern**: HYBR8 operational cycle (Heartbeat → Yield → Backoff → Recovery → 8-second grace)
 - **Scheduling**: Built-in `PeriodicTimer` via `BackgroundService` (no Hangfire)
 - **HTTP**: `IHttpClientFactory` with named clients (`"Ping"`, `"Webhook"`)
 - **Configuration**: `IOptions<T>` / `IOptionsMonitor<T>` pattern; settings in `appsettings.json`

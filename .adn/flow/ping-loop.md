@@ -8,7 +8,7 @@ The `PingWorker` (BackgroundService) runs a continuous loop using `PeriodicTimer
 
 1. Host starts, Kestrel binds to port 8080
 2. `PingWorker.ExecuteAsync` begins
-3. 5-second initial delay (let host fully start)
+3. `InitialDelaySeconds` delay (default 8s — allows DNS, networking, and DI to stabilize)
 4. First ping cycle runs immediately
 5. `PeriodicTimer` starts ticking at `IntervalSeconds` intervals
 
@@ -76,9 +76,20 @@ For each endpoint in config.Endpoints:
 | Shutdown cancellation | Let propagate, exit loop cleanly |
 | Webhook delivery failure | Log error, never throw — ping loop continues |
 
+## HYBR8 Pattern Phases
+
+The ping loop implements the HYBR8 operational pattern (see `growth/coding-conventions.md`):
+
+1. **Heartbeat** — `PingEndpointAsync` sends GET requests
+2. **Yield** — `PeriodicTimer.WaitForNextTickAsync` yields between cycles
+3. **Backoff** — `ServiceState.RecordFailure` counts against threshold
+4. **Recovery** — `ServiceState.RecordSuccess` detects and notifies recovery
+5. **8-second grace** — `InitialDelaySeconds` delay before first tick
+
 ## Key Invariants
 
-- One endpoint failure never stops pinging of other endpoints
-- Webhook failures never crash the ping loop
-- Notifications fire only on state transitions (up→down, down→up)
-- Config changes take effect on the next tick (hot-reload via `IOptionsMonitor`)
+- Handling of one endpoint failure never blocks pinging of others
+- Yielded webhook failures never crash the ping loop
+- Boundary transitions are the sole trigger for notifications (up→down, down→up)
+- Reloaded config takes effect on the next tick (hot-reload via `IOptionsMonitor`)
+- 8-second grace period completes before the first health-check fires
